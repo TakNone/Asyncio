@@ -61,7 +61,7 @@ final class Filesystem implements FileDriver {
 				}
 			}
 		}
-		return $this->delete($path);
+		return async(@rmdir(...),$path)->await();
 	}
 	public function move(string $from,string $to) : bool {
 		return async(@rename(...),$from,$to)->await();
