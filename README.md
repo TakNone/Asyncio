@@ -39,7 +39,7 @@
 ## 🛠️ Requirements
 
 - PHP **8.4** or higher
-- `revolt/event-loop :^1.0`
+- `revolt/event-loop : ^1.0`
 - Optional : `ext-swoole` for high-performance coroutine support
 - Optional : `ext-pcntl` for better signal handling
 
