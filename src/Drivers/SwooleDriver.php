@@ -152,15 +152,17 @@ final class SwooleDriver implements Driver {
 			Coroutine::cancel(intval($id));
 		}
 	}
-	public static function reference(string $id) : void {
+	public static function reference(string $id) : string {
 		if(array_key_exists($id,self::$registry)){
 			self::$registry[$id] = true;
 		}
+		return $id;
 	}
-	public static function unreference(string $id) : void {
+	public static function unreference(string $id) : string {
 		if(array_key_exists($id,self::$registry)){
 			self::$registry[$id] = false;
 		}
+		return $id;
 	}
 	public static function isReferenced(string $id) : bool {
 		if(array_key_exists($id,self::$registry)){

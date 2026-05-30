@@ -40,11 +40,11 @@ final class RevoltDriver implements Driver {
 	public static function cancel(string $id) : void {
 		EventLoop::cancel($id);
 	}
-	public static function reference(string $id) : void {
-		EventLoop::reference($id);
+	public static function reference(string $id) : string {
+		return EventLoop::reference($id);
 	}
-	public static function unreference(string $id) : void {
-		EventLoop::unreference($id);
+	public static function unreference(string $id) : string {
+		return EventLoop::unreference($id);
 	}
 	public static function isReferenced(string $id) : bool {
 		return EventLoop::isReferenced($id);

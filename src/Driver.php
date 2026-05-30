@@ -17,8 +17,8 @@ interface Driver {
 
 	public static function cancel(string $id) : void;
 
-	public static function reference(string $id) : void;
-	public static function unreference(string $id) : void;
+	public static function reference(string $id) : string;
+	public static function unreference(string $id) : string;
 	public static function isReferenced(string $id) : bool;
 
 	public static function setErrorHandler(callable $callback) : void;
