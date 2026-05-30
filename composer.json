@@ -1,0 +1,49 @@
+{
+    "name": "taknone/asyncio",
+    "license": "MIT",
+    "description": "A high-performance async framework for PHP supporting Swoole and Revolt loops",
+    "type": "library",
+    "keywords": [
+        "async",
+        "asyncio",
+        "asynchronously",
+        "non-blocking",
+        "non-blocking-io",
+        "io",
+        "aiofile",
+        "aiosocket",
+        "aiodatabase",
+        "fiber",
+        "coroutine",
+        "revolt",
+        "swoole",
+        "php"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Tak\\Asyncio\\": "src"
+        },
+        "files": [
+            "src/functions.php",
+            "src/File/functions.php",
+            "src/Socket/functions.php",
+            "src/ByteStream/functions.php"
+        ]
+    },
+    "authors": [
+        {
+            "name": "Tak None",
+            "email": "MrTakNone@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=8.4",
+        "revolt/event-loop": "^1.0"
+    },
+    "suggest": {
+        "ext-swoole": "Required for high-performance Swoole coroutine support ( > 5.0.0 )",
+        "ext-pcntl": "Allows for better signal handling"
+    }
+}
