@@ -41,17 +41,17 @@ readonly class Future {
 	}
 	public function ignore() : self {
 		$this->state->ignore();
-		Loop::queue($this->await(...));
+		Loop::unreference(Loop::defer($this->await(...)));
 		return $this;
 	}
 	public function catch(callable $catch) : self {
 		$this->state->catch($catch(...));
-		Loop::queue($this->await(...));
+		Loop::unreference(Loop::defer($this->await(...)));
 		return $this;
 	}
 	public function finally(callable $finally) : self {
 		$this->state->finally($finally(...));
-		Loop::queue($this->await(...));
+		Loop::unreference(Loop::defer($this->await(...)));
 		return $this;
 	}
 }

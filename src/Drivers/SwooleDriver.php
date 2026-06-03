@@ -50,7 +50,7 @@ final class SwooleDriver implements Driver {
 	public static function delay(float $seconds,callable $callback) : string {
 		$id = Timer::after(intval($seconds * 1000),function() use($callback,&$id) : void {
 			try {
-				call_user_func($callback);
+				call_user_func($callback,strval($id));
 			} finally {
 				unset(self::$registry[$id]);
 			}

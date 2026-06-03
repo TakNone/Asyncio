@@ -17,7 +17,7 @@ final class RevoltDriver implements Driver {
 		$suspension->suspend();
 	}
 	public static function delay(float $seconds,callable $callback) : string {
-		return EventLoop::delay($seconds,fn(string $callbackId) => call_user_func($callback));
+		return EventLoop::delay($seconds,$callback(...));
 	}
 	public static function repeat(float $seconds,callable $callback) : string {
 		return EventLoop::repeat($seconds,$callback(...));

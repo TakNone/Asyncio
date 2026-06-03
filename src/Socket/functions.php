@@ -9,7 +9,7 @@ function listen(string $address,int $port,int $backlog = 128) : StreamSocket | f
 	return boolval($socket->bind($address,$port) and $socket->listen($backlog)) ? $socket : false;
 }
 
-function socketConnector(int $domain = AF_INET,int $type = SOCK_STREAM,int $protocol = SOL_TCP & SOL_UDP) : StreamSocket {
+function socketConnector(int $domain = AF_INET,int $type = SOCK_STREAM,int $protocol = SOL_TCP) : StreamSocket {
 	return new StreamSocket($domain,$type,$protocol);
 }
 
@@ -40,7 +40,7 @@ function createSocketPair(? array $context = null,int $chunkSize = PHP_INT_MAX) 
 				@stream_context_set_options($socket,$context);
 			}
 			$rawSocket = @socket_import_stream($socket);
-			@socket_set_option($rawSocket,SOL_TCP & SOL_UDP,TCP_NODELAY,1);
+			@socket_set_option($rawSocket,SOL_SOCKET,TCP_NODELAY,1);
 			$sockets[$i] = new readonly class($rawSocket) extends StreamSocket {
 				public function __construct(protected object $socket){
 				}
