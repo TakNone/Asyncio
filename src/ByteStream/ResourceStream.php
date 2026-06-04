@@ -13,23 +13,33 @@ use Tak\Asyncio\Cancellation;
 use function Tak\Asyncio\async;
 
 final class ResourceStream implements Resource {
-	public const int CHUNK_SIZE = 1024 * 1024;
+	public const int CHUNK_SIZE = 8 * 1024;
 
 	public function __construct(protected mixed $fp){
 		@stream_set_blocking($fp,false);
 	}
-	public function read(? int $length = null,? Cancellation $cancellation = null) : string {
+	private function shouldUseSingleRead(mixed $stream) : bool {
+		$meta = stream_get_meta_data($stream);
+		$streamType = strtolower(strval($meta['stream_type'] ?? null));
+		return match(true){
+			str_contains($streamType,'udp') => true,
+			str_contains($streamType,'unix_dgram') => true,
+			str_contains($streamType,'stdio') => true,
+			default => false
+		};
+	}
+	public function read(? int $length = null,? Cancellation $cancellation = null) : ? string {
 		$buffer = strval(null);
 		$cancellation?->throwIfCancelled();
 		$suspension = Loop::getSuspension();
-		Loop::onReadable($this->fp,static function(string $id,mixed $fp) use($suspension,&$buffer,$length) : void {
+		$useSingleRead = boolval(is_null($length) and $this->shouldUseSingleRead($this->fp));
+		Loop::onReadable($this->fp,static function(string $id,mixed $fp) use($suspension,$useSingleRead,&$buffer,$length) : void {
 			$limit = is_null($length) ? self::CHUNK_SIZE : min(self::CHUNK_SIZE,$length - strlen($buffer));
 			$chunk = ($limit > 0 ? fread($fp,$limit) : false);
-			if($chunk === false || empty($chunk)){
+			$buffer .= $chunk;
+			if($chunk === false || empty($chunk) || $useSingleRead){
 				Loop::cancel($id);
-				$suspension->resume($buffer);
-			} else {
-				$buffer .= $chunk;
+				$suspension->resume(empty($buffer) === false ? $buffer : null);
 			}
 		});
 		$id = $cancellation?->subscribe(function(? \Throwable $exception) use($suspension) : void {
@@ -41,7 +51,7 @@ final class ResourceStream implements Resource {
 			$cancellation?->unsubscribe($id);
 		}
 	}
-	public function write(string $content,? Cancellation $cancellation = null) : int {
+	public function write(string $content,? Cancellation $cancellation = null) : ? int {
 		$buffer = strval(null);
 		$written = 0;
 		$length = strlen($content);
@@ -52,7 +62,7 @@ final class ResourceStream implements Resource {
 			$written += intval($result);
 			if($result === false || $written >= $length){
 				Loop::cancel($id);
-				$suspension->resume($written);
+				$suspension->resume(empty($written) === false ? $written : null);
 			}
 		});
 		$id = $cancellation?->subscribe(function(? \Throwable $exception) use($suspension) : void {

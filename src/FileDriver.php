@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Tak\Asyncio\File;
+namespace Tak\Asyncio;
 
 interface FileDriver {
 	public function open(string $path,string $mode) : object;

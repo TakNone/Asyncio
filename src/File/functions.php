@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Tak\Asyncio\File;
 
+use Tak\Asyncio\FileDriver;
+
 function getFileDriver() : FileDriver {
 	static $driver = null;
 	if($driver){

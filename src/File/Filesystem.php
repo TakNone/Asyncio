@@ -6,6 +6,8 @@ namespace Tak\Asyncio\File;
 
 use Tak\Asyncio\Loop;
 
+use Tak\Asyncio\FileDriver;
+
 use Tak\Asyncio\ByteStream\ResourceStream;
 
 use function Tak\Asyncio\async;
@@ -22,21 +24,36 @@ final class Filesystem implements FileDriver {
 	}
 	public function read(string $path,? int $length = null) : string {
 		if(Loop::name() === 'Swoole'){
-			$content = strval(System::readFile($path));
+			$content = System::readFile($path);
+			if($content === false){
+				throw new \Exception('Could not read the file '.$path);
+			}
 			return is_null($length) ? $content : substr($content,0,$length);
 		}
 		$file = $this->open($path,'r+');
 		$content = $file->read($length);
+		if(is_null($content)){
+			throw new \Exception('Could not read the file '.$path);
+		}
+		while(is_null($length) and is_null($chunk = $file->read($length)) === false){
+			$content .= $chunk;
+		}
 		$file->close();
 		return $content;
 	}
 	public function write(string $path,string $content) : int {
 		if(Loop::name() === 'Swoole'){
-			$bytes = intval(System::writeFile($path,$content));
-			return $bytes;
+			$result = System::writeFile($path,$content);
+			if($result === false){
+				throw new \Exception('Could not write to the file '.$path);
+			}
+			return strlen($content);
 		}
 		$file = $this->open($path,'w+');
 		$bytes = $file->write($content);
+		if(is_null($content)){
+			throw new \Exception('Could not write to the file '.$path);
+		}
 		$file->close();
 		return $bytes;
 	}

@@ -34,7 +34,7 @@ class WebSocket {
 							'Connection'=>'Upgrade',
 							'Sec-WebSocket-Accept'=>$accept
 						);
-						$formatted = str_replace(['='],[': '],http_build_query(data : $answers,arg_separator : CRLF));
+						$formatted = implode(CRLF,array_map(static fn(string $k,string $v) : string => strval($k.': '.$v),array_keys($answers),array_values($answers)));
 						return boolval($this->stream->write($answer.$formatted.CRLF.CRLF,$timeout));
 					} else {
 						return false;
@@ -61,6 +61,7 @@ class WebSocket {
 							continue;
 						}
 						if($opcode === 0x08){
+							$this->write(pack('n',1000),$timeout,0x08);
 							$this->stream->close();
 							return false;
 						}
@@ -120,7 +121,7 @@ class WebSocket {
 			'Sec-WebSocket-Protocol'=>'binary',
 			'Sec-WebSocket-Version'=>'13'
 		);
-		$formatted = str_replace(['='],[': '],http_build_query(data : $headers,arg_separator : CRLF));
+		$formatted = implode(CRLF,array_map(static fn(string $k,string $v) : string => strval($k.': '.$v),array_keys($headers),array_values($headers)));
 		$this->stream->write($header.$formatted.CRLF.CRLF,$timeout);
 		$response = $this->stream->read(null,$timeout);
 		if($response == false || str_contains($response,'101 Switching Protocols') === false){
@@ -157,6 +158,7 @@ class WebSocket {
 				continue;
 			}
 			if($opcode === 0x08){
+				$this->write(pack('n',1000),$timeout,0x08);
 				$this->stream->close();
 				return false;
 			}
@@ -269,7 +271,7 @@ class WebSocket {
 			if($masked){
 				$payload = $this->maskPayload($payload,$mask);
 			}
-			return compact($fin,$opcode,$payload);
+			return compact('fin','opcode','payload');
 		} else {
 			return false;
 		}
