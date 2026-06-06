@@ -54,7 +54,7 @@ final class RevoltDriver implements Driver {
 		return new class($suspension) implements Suspension {
 			protected bool $resolved = false;
 
-			public function __construct(private $s){
+			public function __construct(private object $s){
 			}
 			public function suspend() : mixed {
 				$this->resolved = false;

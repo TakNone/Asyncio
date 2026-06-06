@@ -17,7 +17,41 @@ use Swoole\Coroutine\System;
 final class Filesystem implements FileDriver {
 	public function open(string $path,string $mode) : object {
 		if($fp = @fopen($path,$mode)){
-			return new ResourceStream($fp);
+			return new class($fp){
+				public function __construct(private mixed $fp){
+					@stream_set_blocking($fp,false);
+				}
+				public function read(? int $length = null) : string {
+					$content = is_null($length) ? stream_get_contents($this->fp) : fread($this->fp,$length);
+					if($content === false){
+						throw new \Exception('Could not read the file');
+					}
+					return $content;
+				}
+				public function write(string $content) : int {
+					$length = strlen($content);
+					$written = 0;
+					while($written < $length){
+						$result = fwrite($this->fp,substr($content,$written));
+						if($result === false){
+							throw new \Exception('Could not write to the file');
+						}
+						if($result === 0){
+							throw new \Exception('Write operation stalled');
+						}
+						$written += $result;
+					}
+					return $written;
+				}
+				public function close() : void {
+					if(is_resource($this->fp)){
+						@fclose($this->fp);
+					}
+				}
+				public function __destruct(){
+					$this->close();
+				}
+			};
 		} else {
 			throw new \Exception('Could not open file : '.$path);
 		}
@@ -29,17 +63,17 @@ final class Filesystem implements FileDriver {
 				throw new \Exception('Could not read the file '.$path);
 			}
 			return is_null($length) ? $content : substr($content,0,$length);
+		} else if($fp = @fopen($path,'rb')){
+			@stream_set_blocking($fp,false);
+			$content = is_null($length) ? stream_get_contents($fp) : fread($fp,$length);
+			if($content === false){
+				throw new \Exception('Could not read the file '.$path);
+			}
+			@fclose($fp);
+			return $content;
+		} else {
+			throw new \Exception('Could not open file : '.$path);
 		}
-		$file = $this->open($path,'rb');
-		$content = $file->read($length);
-		if(is_null($content)){
-			throw new \Exception('Could not read the file '.$path);
-		}
-		while(is_null($length) and is_null($chunk = $file->read($length)) === false){
-			$content .= $chunk;
-		}
-		$file->close();
-		return $content;
 	}
 	public function write(string $path,string $content) : int {
 		if(Loop::name() === 'Swoole'){
@@ -48,14 +82,25 @@ final class Filesystem implements FileDriver {
 				throw new \Exception('Could not write to the file '.$path);
 			}
 			return strlen($content);
+		} else if($fp = @fopen($path,'wb')){
+			@stream_set_blocking($fp,false);
+			$length = strlen($content);
+			$written = 0;
+			while($written < $length){
+				$result = fwrite($fp,substr($content,$written));
+				if($result === false){
+					throw new \Exception('Could not write to the file '.$path);
+				}
+				if($result === 0){
+					throw new \Exception('Write operation stalled');
+				}
+				$written += $result;
+			}
+			@fclose($fp);
+			return $written;
+		} else {
+			throw new \Exception('Could not open file : '.$path);
 		}
-		$file = $this->open($path,'wb');
-		$bytes = $file->write($content);
-		if(is_null($content)){
-			throw new \Exception('Could not write to the file '.$path);
-		}
-		$file->close();
-		return $bytes;
 	}
 	public function exists(string $path) : bool {
 		return async(@file_exists(...),$path)->await();
@@ -84,7 +129,11 @@ final class Filesystem implements FileDriver {
 		return async(@rename(...),$from,$to)->await();
 	}
 	public function size(string $path) : int {
-		return async(@filesize(...),$path)->await();
+		$size = async(@filesize(...),$path)->await();
+		if($size === false){
+			throw new \Exception('Could not determine file size : '.$path);
+		}
+		return $size;
 	}
 	public function touch(string $path,? int $mtime = null,? int $atime = null) : bool {
 		return async(@touch(...),$path,$mtime,$atime)->await();

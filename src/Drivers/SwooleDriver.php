@@ -86,6 +86,7 @@ final class SwooleDriver implements Driver {
 		return $id;
 	}
 	public static function onReadable(mixed $resource,callable $callback) : string {
+		/*
 		if(is_resource($resource)){
 			$stat = fstat($resource);
 			if(0100000 === ($stat['mode'] & 0100000)){
@@ -103,6 +104,7 @@ final class SwooleDriver implements Driver {
 				return $id;
 			}
 		}
+		*/
 		$id = uniqid('event_');
 		Event::add($resource,static fn(mixed $stream) : mixed => $callback($id,$stream),null,SWOOLE_EVENT_READ);
 		self::$registry[$id] = true;
@@ -110,6 +112,7 @@ final class SwooleDriver implements Driver {
 		return $id;
 	}
 	public static function onWritable(mixed $resource,callable $callback) : string {
+		/*
 		if(is_resource($resource)){
 			$stat = fstat($resource);
 			if(0100000 === ($stat['mode'] & 0100000)){
@@ -127,6 +130,7 @@ final class SwooleDriver implements Driver {
 				return $id;
 			}
 		}
+		*/
 		$id = uniqid('event_');
 		Event::add($resource,null,static fn(mixed $stream) : mixed => $callback($id,$stream),SWOOLE_EVENT_WRITE);
 		self::$registry[$id] = true;
