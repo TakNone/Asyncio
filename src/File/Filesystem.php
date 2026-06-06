@@ -30,7 +30,7 @@ final class Filesystem implements FileDriver {
 			}
 			return is_null($length) ? $content : substr($content,0,$length);
 		}
-		$file = $this->open($path,'r+');
+		$file = $this->open($path,'rb');
 		$content = $file->read($length);
 		if(is_null($content)){
 			throw new \Exception('Could not read the file '.$path);
@@ -49,7 +49,7 @@ final class Filesystem implements FileDriver {
 			}
 			return strlen($content);
 		}
-		$file = $this->open($path,'w+');
+		$file = $this->open($path,'wb');
 		$bytes = $file->write($content);
 		if(is_null($content)){
 			throw new \Exception('Could not write to the file '.$path);
