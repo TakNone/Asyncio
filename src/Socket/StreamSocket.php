@@ -66,9 +66,9 @@ class StreamSocket {
 							Loop::cancel($id);
 							$suspension->resume($this->getOption(SO_ERROR) === 0);
 						});
-						$cancel = $cancellation?->subscribe($this->pending[$id] = static function() use($suspension,$id) : void {
+						$cancel = $cancellation?->subscribe($this->pending[$id] = static function(? \Throwable $exception) use($suspension,$id) : void {
 							Loop::cancel($id);
-							$suspension->resume(false);
+							$suspension->throw(is_null($exception) ? new \LogicException('Connection timed out') : $exception);
 						});
 						try {
 							return $suspension->suspend();
@@ -102,9 +102,9 @@ class StreamSocket {
 									Loop::cancel($id);
 									$suspension->resume(true);
 								});
-								$cancel = $cancellation?->subscribe($this->pending[$id] = static function() use($suspension,$id) : void {
+								$cancel = $cancellation?->subscribe($this->pending[$id] = static function(? \Throwable $exception) use($suspension,$id) : void {
 									Loop::cancel($id);
-									$suspension->resume(false);
+									$suspension->throw(is_null($exception) ? new \LogicException('Writing to socket timed out') : $exception);
 								});
 								try {
 									if($suspension->suspend() === false){
@@ -146,9 +146,9 @@ class StreamSocket {
 							$result = @socket_recv($this->socket,$buffer,is_null($length) ? (1 << 16) : $length,is_null($length) ? 0 : $flags);
 							$suspension->resume($result);
 						});
-						$cancel = $cancellation?->subscribe($this->pending[$id] = static function() use($suspension,$id) : void {
+						$cancel = $cancellation?->subscribe($this->pending[$id] = static function(? \Throwable $exception) use($suspension,$id) : void {
 							Loop::cancel($id);
-							$suspension->resume(false);
+							$suspension->throw(is_null($exception) ? new \LogicException('Reading from socket timed out') : $exception);
 						});
 						try {
 							$result = $suspension->suspend();
