@@ -11,6 +11,9 @@ use Tak\Asyncio\Suspension;
 use Revolt\EventLoop;
 
 final class RevoltDriver implements Driver {
+	private static bool $running = false;
+	private static array $waiters = array();
+
 	public static function sleep(float $seconds) : void {
 		$suspension = EventLoop::getSuspension();
 		EventLoop::delay($seconds,static fn() : null => $suspension->resume());
@@ -78,7 +81,19 @@ final class RevoltDriver implements Driver {
 		EventLoop::setErrorHandler($callback(...));
 	}
 	public static function run() : void {
-		EventLoop::run();
+		if(self::$running){
+			$blocked = self::getSuspension();
+			self::$waiters[]= $blocked;
+			$blocked->suspend();
+		} else {
+			try {
+				self::$running = true;
+				EventLoop::run();
+			} finally {
+				self::$running = false;
+				array_map(static fn(Suspension $blocked) : null => $blocked->resume(),self::$waiters);
+			}
+		}
 	}
 }
 
